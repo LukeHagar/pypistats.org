@@ -1,0 +1,33 @@
+{
+  "name": "pypistats.dev",
+  "dockerComposeFile": [
+    "../docker-compose.yml",
+    "../docker-compose.dev.yml"
+  ],
+  "service": "web",
+  "workspaceFolder": "/app",
+  "build": {
+    "args": {
+      "SKIP_APP_BUILD": "1"
+    }
+  },
+  "runArgs": ["--env-file", ".env"],
+  "forwardPorts": [5173, 3000, 5555],
+  "portsAttributes": {
+    "5173": { "label": "Vite Dev Server" },
+    "3000": { "label": "Node Adapter Server" },
+    "5555": { "label": "Prisma Studio" }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "esbenp.prettier-vscode",
+        "Prisma.prisma",
+        "svelte.svelte-vscode",
+        "dbaeumer.vscode-eslint"
+      ]
+    }
+  }
+}
+
+

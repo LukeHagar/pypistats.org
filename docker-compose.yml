@@ -1,92 +1,53 @@
-x-envs: &envs
-  environment:
-    - FLASK_APP=pypistats/run.py
-    - FLASK_ENV=development
-    - FLASK_DEBUG=1
-    - POSTGRESQL_HOST=postgresql
-    - POSTGRESQL_PORT=5432
-    - POSTGRESQL_USERNAME=admin
-    - POSTGRESQL_PASSWORD=root
-    - POSTGRESQL_DBNAME=pypistats
-    - CELERY_BROKER_URL=redis://redis
-    - BASIC_AUTH_USER=user
-    - BASIC_AUTH_PASSWORD=password
-
-version: "3.4"
-
-volumes:
-  pgdata: {}
+version: '3.9'
 
 services:
-  web:
-    build:
-      context: .
-    image: web
-    command: webdev
-    depends_on:
-      - postgresql
-    <<: *envs
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: pypistats
+      POSTGRES_USER: pypistats
+      POSTGRES_PASSWORD: pypistats
+    volumes:
+      - pgdata:/var/lib/postgresql/data
     ports:
-      - "5000:5000"
-    volumes:
-      - "./pypistats/:/app/pypistats/"
-  beat:
-    image: web
-    command: beat
-    depends_on:
-      - redis
-    <<: *envs
-    volumes:
-      - "./pypistats/:/app/pypistats/"
-  celery:
-    image: web
-    command: celery
-    depends_on:
-      - redis
-      - postgresql
-    <<: *envs
-    volumes:
-      - "./pypistats/:/app/pypistats/"
-  flower:
-    image: web
-    command: flower
-    depends_on:
-      - redis
-    <<: *envs
-    ports:
-      - "5555:5555"
-    volumes:
-      - "./pypistats/:/app/pypistats/"
-  migrate:
-    image: web
-    command: migrate
-    depends_on:
-      - postgresql
-    <<: *envs
-    volumes:
-      - "./pypistats/:/app/pypistats/"
-      - "./migrations/:/app/migrations/"
-  seeds:
-    image: web
-    command: seeds
-    depends_on:
-      - postgresql
-      - migrate
-    <<: *envs
-    volumes:
-      - "./pypistats/:/app/pypistats/"
-      - "./migrations/:/app/migrations/"
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
   redis:
-    image: "redis:5.0.7-alpine"
+    image: redis:7
     ports:
       - "6379:6379"
-  postgresql:
-    image: "postgres:12"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  web:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
-      - POSTGRES_USER=admin
-      - POSTGRES_PASSWORD=root
-      - POSTGRES_DB=pypistats
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://pypistats:pypistats@db:5432/pypistats?schema=public
+      REDIS_URL: redis://redis:6379
+      ENABLE_CRON: "true"
+      # Set your BigQuery project and credentials
+      # GOOGLE_PROJECT_ID: your-project
+      # GOOGLE_APPLICATION_CREDENTIALS_JSON: '{"type":"service_account",...}'
     ports:
-      - "5433:5432"
-    volumes:
-      - "pgdata:/var/lib/postgresql/data"
+      - "3000:3000"
+    command: ["/entrypoint.sh"]
+
+volumes:
+  pgdata:
+
+
