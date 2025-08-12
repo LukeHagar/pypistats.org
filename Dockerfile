@@ -1,43 +1,37 @@
-FROM python:3.8.5-slim
+FROM node:20-slim
 
-# Add build deps for python packages
-# libpq-dev is required to install psycopg2-binary
-# curl is used to install poetry
-RUN apt-get update && \
-    apt-get install -y curl libpq-dev && \
-    apt-get clean
+# Install deps needed by Prisma and shell
+RUN apt-get update && apt-get install -y openssl bash && rm -rf /var/lib/apt/lists/*
 
-# Set the working directory to /app
 WORKDIR /app
 
-# Create python user to avoid having to run as root
-RUN useradd -m python && \
-    chown python:python -R /app
-# Set the user
-USER python
+# Allow skipping app build in devcontainer
+ARG SKIP_APP_BUILD=0
 
-# Set the poetry version
-ARG POETRY_VERSION=1.0.10
-# Set to ensure logs are output promptly
-ENV PYTHONUNBUFFERED=1
-# Update the path
-ENV PATH=/home/python/.poetry/bin:/home/python/.local/bin:$PATH
+# Copy package manifests first for better cache
+COPY package.json pnpm-lock.yaml* ./
 
-# Install vendored poetry
-RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
+# Enable and use pnpm via corepack
+RUN corepack enable && corepack prepare pnpm@9.12.3 --activate
 
-# Add poetry stuff
-ADD pyproject.toml .
-ADD poetry.lock .
+# Install dependencies
+RUN pnpm install --frozen-lockfile
 
-# Install all the dependencies and cleanup
-RUN poetry config virtualenvs.create false && \
-    poetry run pip install --user -U pip && \
-    poetry install --no-dev && \
-    "yes" | poetry cache clear --all pypi
+# Copy the rest of the source
+COPY . .
 
-# Add everything
-ADD . .
+# Generate Prisma client and build SvelteKit (Node adapter)
+RUN pnpm prisma generate
+RUN if [ "$SKIP_APP_BUILD" != "1" ]; then pnpm build; fi
 
-# Set the entrypoint script
-ENTRYPOINT ["./docker-entrypoint.sh"]
+ENV NODE_ENV=production
+
+# Entrypoint handles migrations and start
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+EXPOSE 3000
+
+ENTRYPOINT ["/entrypoint.sh"]
+
+

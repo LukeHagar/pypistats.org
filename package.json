@@ -1,0 +1,51 @@
+{
+	"name": "pypistats",
+	"private": true,
+	"version": "0.0.1",
+	"type": "module",
+	"scripts": {
+    "dev": "vite dev",
+    "build": "svelte-kit build",
+    "start": "node build/index.js",
+		"prepare": "svelte-kit sync || echo ''",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+		"format": "prettier --write .",
+		"lint": "prettier --check .",
+		"db:studio": "prisma studio",
+		"db:generate": "prisma generate",
+		"db:migrate": "prisma migrate dev",
+		"db:deploy": "prisma migrate deploy"
+	},
+	"dependencies": {
+		"@google-cloud/bigquery": "^8.1.1",
+		"@prisma/client": "^6.13.0",
+    "@sveltejs/adapter-node": "^5.2.8",
+    "@types/node-cron": "^3.0.11",
+		"node-cron": "^4.2.1",
+		"redis": "^5.7.0"
+	},
+	"devDependencies": {
+		"@sveltejs/adapter-auto": "^6.0.1",
+		"@sveltejs/kit": "^2.27.0",
+		"@sveltejs/vite-plugin-svelte": "^6.1.0",
+		"@tailwindcss/forms": "^0.5.10",
+		"@tailwindcss/typography": "^0.5.16",
+		"@tailwindcss/vite": "^4.1.11",
+		"mdsvex": "^0.12.6",
+		"prettier": "^3.6.2",
+		"prettier-plugin-svelte": "^3.4.0",
+		"prettier-plugin-tailwindcss": "^0.6.14",
+		"prisma": "^6.13.0",
+		"svelte": "^5.37.3",
+		"svelte-check": "^4.3.1",
+		"tailwindcss": "^4.1.11",
+		"typescript": "^5.9.2",
+		"vite": "^7.0.6"
+	},
+	"pnpm": {
+		"onlyBuiltDependencies": [
+			"esbuild"
+		]
+	}
+}

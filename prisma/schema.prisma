@@ -1,0 +1,70 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model RecentDownloadCount {
+  package   String
+  category  String
+  downloads BigInt
+
+  @@id([package, category])
+  @@map("recent")
+}
+
+model OverallDownloadCount {
+  date      DateTime @db.Date
+  package   String
+  category  String
+  downloads Int
+
+  @@id([date, package, category])
+  @@map("overall")
+}
+
+model PythonMajorDownloadCount {
+  date      DateTime @db.Date
+  package   String
+  category  String
+  downloads Int
+
+  @@id([date, package, category])
+  @@map("python_major")
+}
+
+model PythonMinorDownloadCount {
+  date      DateTime @db.Date
+  package   String
+  category  String
+  downloads Int
+
+  @@id([date, package, category])
+  @@map("python_minor")
+}
+
+model SystemDownloadCount {
+  date      DateTime @db.Date
+  package   String
+  category  String
+  downloads Int
+
+  @@id([date, package, category])
+  @@map("system")
+}
+
+model InstallerDownloadCount {
+  date      DateTime @db.Date
+  package   String
+  category  String
+  downloads Int
+
+  @@id([date, package, category])
+  @@map("installer")
+}
